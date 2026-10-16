@@ -1,19 +1,8 @@
-# GitHub Actions 工作流 - 构建 Android APK
-#
-# 使用方法:
-# 1. 将此仓库推送到 GitHub
-# 2. 进入 Actions 标签页
-# 3. 点击 "Build Android App" 工作流
-# 4. 点击 "Run workflow" 按钮触发构建
-# 5. 等待构建完成（约 15-30 分钟），在 Artifacts 中下载 APK
-
 name: Build Android App
 
 on:
-  # 推送 master/main 分支时自动构建
   push:
     branches: [ master, main ]
-  # 允许手动触发
   workflow_dispatch:
 
 jobs:
@@ -43,13 +32,18 @@ jobs:
       - name: Install buildozer
         run: |
           pip install buildozer
-          pip install cython==3.0.10
+          pip install cython==0.29.36
 
       - name: Install app requirements
         run: |
           pip install -r requirements.txt
 
-      - name: Build APK
+      - name: Accept Android SDK licenses
+        run: |
+          mkdir -p ~/.android
+          yes | sdkmanager --licenses
+
+      - name: Build APK with verbose log
         run: |
           buildozer -v android debug > buildozer.log 2>&1 || true
         timeout-minutes: 45
@@ -62,25 +56,10 @@ jobs:
           path: buildozer.log
           retention-days: 7
 
-      - name: List build artifacts
-        run: |
-          ls -la dist/ 2>/dev/null || echo "dist directory not found"
-          find . -name "*.apk" -type f 2>/dev/null || echo "No APK files found"
-
       - name: Upload APK
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: stock-display-app
-          path: |
-            dist/*.apk
+          path: dist/*.apk
           retention-days: 30
-        if: always()
-
-      - name: Report status
-        if: failure()
-        run: |
-          echo "Build failed. Check the logs above for details."
-          echo "Common issues:"
-          echo "  1. Insufficient disk space - check with 'df -h'"
-          echo "  2. Network timeouts - try rerunning the workflow"
-          echo "  3. Missing dependencies - check buildozer init output"
