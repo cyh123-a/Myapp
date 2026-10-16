@@ -5,7 +5,7 @@
 # 2. 进入 Actions 标签页
 # 3. 点击 "Build Android App" 工作流
 # 4. 点击 "Run workflow" 按钮触发构建
-# 5. 等待构建完成（约 15-30 分钟），在 Artifacts 中下载 APK
+# 5. 等待构建完成(约15-30分钟),在 Artifacts 中下载 APK
 
 name: Build Android App
 
@@ -26,67 +26,40 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: '3.11'
 
       - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential git python3-dev python3-pip \
-            libssl-dev libffi-dev zlib1g-dev pkg-config wget unzip fonts-liberation
+            libssl-dev libffi-dev zlib1g-dev pkg-config wget unzip \
+            fonts-liberation libgl1-mesa-glx
 
-      - name: Install Python dependencies
+      - name: Install buildozer
         run: |
           python -m pip install --upgrade pip
-          pip install setuptools wheel buildozer cython==3.0.10
-          # 将 pip 用户 bin 目录加入 PATH（GitHub Actions 特殊变量）
-          echo "/root/.local/bin" >> 
+          pip install setuptools wheel
+          pip install buildozer cython==3.0.10
 
-      - name: Verify buildozer installation
+      - name: Accept Android SDK licenses
         run: |
-          echo "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-          which buildozer && buildozer --version || echo "ERROR: buildozer not found in PATH"
-          # 如果 buildozer 命令不可用，尝试手动查找
-          if ! which buildozer >/dev/null 2>&1; then
-            echo "Searching for buildozer script..."
-            find /opt/hostedtoolcache/Python -name "buildozer" -type f 2>/dev/null | head -5
-            find /root/.local/bin -name "buildozer" -type f 2>/dev/null | head -5
+          mkdir -p ~/.android
+          SDKMGR=$(find / -name "sdkmanager" -type f 2>/dev/null | head -n 1)
+          if [ -n "$SDKMGR" ]; then
+            echo "Found sdkmanager at: $SDKMGR"
+            echo y | "$SDKMGR" --licenses
+          else
+            echo "sdkmanager not found yet, will try during buildozer run"
           fi
 
       - name: Install app requirements
         run: |
-          pip install -r requirements.txt
+          pip install -r requirements.txt || echo "No requirements.txt found, continuing..."
 
-      - name: Build APK (first attempt - downloads SDK)
+      - name: Build APK
         run: |
-          # 第一次运行会下载 SDK/NDK，可能会在许可证环节暂停
-          # 使用 || true 确保即使失败也不会停止工作流
-          buildozer android debug 2>&1 || true
-        timeout-minutes: 45
-
-      - name: Accept Android SDK licenses
-        run: |
-          # SDK 应该已经被下载了，找到 sdkmanager 并自动接受所有许可证
-          SDKMANAGER=
-          if [ -n "" ]; then
-            echo "Found sdkmanager at: "
-            echo y | "" --licenses
-          else
-            echo "sdkmanager not found in ~/.buildozer, searching..."
-            SDKMANAGER=
-            if [ -n "" ]; then
-              echo "Found sdkmanager at: "
-              echo y | "" --licenses
-            else
-              echo "WARNING: sdkmanager not found anywhere"
-              ls -la ~/.buildozer/android/platform/ 2>/dev/null || echo "No android platform directory"
-            fi
-          fi
-
-      - name: Build APK (second attempt - with licenses accepted)
-        run: |
-          # 许可证已接受，这次应该能顺利编译
           buildozer android debug
-        timeout-minutes: 45
+        timeout-minutes: 60
 
       - name: List build artifacts
         if: always()
@@ -95,8 +68,6 @@ jobs:
           ls -la dist/ 2>/dev/null || echo "dist directory not found"
           echo "=== APK files ==="
           find . -name "*.apk" -type f 2>/dev/null || echo "No APK files found"
-          echo "=== buildozer cache ==="
-          ls -la .buildozer/ 2>/dev/null || echo ".buildozer directory not found"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -105,11 +76,3 @@ jobs:
           name: stock-display-app
           path: dist/*.apk
           retention-days: 30
-
-      - name: Upload Build Log on Failure
-        uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: buildozer-logs
-          path: .buildozer/
-          retention-days: 7
