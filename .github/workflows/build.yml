@@ -11,6 +11,20 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
+    
+      - name: Clean Cache & Build APK
+        run: |
+          # 1. 强制删除云端旧的 SDK 缓存（关键！）
+          rm -rf ~/.buildozer/android/platform/android-sdk/build-tools
+          rm -rf ~/.buildozer/android/platform/android-sdk/platforms
+          
+          # 2. 再次确认配置文件里的版本
+          grep "build_tools_version" buildozer.spec || echo "⚠️ 警告: buildozer.spec 中未找到 build_tools_version！"
+          
+          # 3. 开始构建
+          buildozer -v android debug
+        timeout-minutes: 60
+    
       - name: Checkout code
         uses: actions/checkout@v4
 
