@@ -19,7 +19,7 @@ source.include_exts = py,png,jpg,kv,atlas
 version = 1.0.0
 
 # (list) 应用依赖库（必须包含 python3 和 kivy）
-requirements = python3,kivy,requests
+requirements = python3,kivy,requests,cython==0.29.36
 
 # (list) Android 需要的权限（获取网络数据必须开启 INTERNET）
 android.permissions = INTERNET,ACCESS_NETWORK_STATE
@@ -29,6 +29,10 @@ orientation = portrait
 
 # (bool) 是否全屏（True=全屏隐藏状态栏, 0=显示状态栏）
 fullscreen = 0
+
+
+# 指定稳定的 NDK 版本
+android.ndk = 25b
 
 # (str) 应用图标（如果暂时没有图标，可以注释掉这行）
 # icon.filename = icon.png

@@ -49,10 +49,18 @@ jobs:
         run: |
           pip install -r requirements.txt
 
-      - name: Build APK
+            - name: Build APK
         run: |
-          buildozer android debug
+          buildozer -v android debug > buildozer.log 2>&1 || true
         timeout-minutes: 45
+
+      - name: Upload Build Log
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: buildozer-log
+          path: buildozer.log
+          retention-days: 7
 
       - name: List build artifacts
         run: |
