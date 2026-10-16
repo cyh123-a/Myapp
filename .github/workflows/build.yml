@@ -49,7 +49,7 @@ jobs:
         run: |
           pip install -r requirements.txt
 
-            - name: Build APK
+      - name: Build APK
         run: |
           buildozer -v android debug > buildozer.log 2>&1 || true
         timeout-minutes: 45
