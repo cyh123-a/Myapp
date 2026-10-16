@@ -44,10 +44,7 @@ jobs:
         run: |
           pip install -r requirements.txt
 
-      - name: Initialize buildozer
-        run: |
-          buildozer init
-          echo "Buildozer initialized"
+      
 
       - name: Build APK
         run: |
