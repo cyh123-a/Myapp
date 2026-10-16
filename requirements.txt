@@ -1,0 +1,12 @@
+# Python 依赖包
+# Kivy 用于 Android 应用开发
+kivy==2.3.0
+
+# HTTP 请求库
+requests==2.31.0
+
+# 其他依赖
+urllib3==2.2.2
+certifi==2024.7.4
+charset-normalizer==3.3.2
+idna==3.7
