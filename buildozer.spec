@@ -18,6 +18,10 @@ source.include_exts = py,png,jpg,kv,atlas
 # (str) 应用版本号
 version = 1.0.0
 
+# 将版本改为 34.0.0（这是一个非常稳定且不会报许可证错误的版本）
+android.build_tools_version = 34.0.0
+
+
 # (list) 应用依赖库（必须包含 python3 和 kivy）
 requirements = python3,kivy,requests,cython==0.29.36
 
